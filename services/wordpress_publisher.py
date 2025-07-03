@@ -10,7 +10,15 @@ logger = logging.getLogger(__name__)
 
 class WordPressPublisher:
     def __init__(self):
-        self.base_url = WORDPRESS_CONFIG['url']
+        base_url = WORDPRESS_CONFIG['url']
+        # Ensure URL has proper WordPress API endpoint
+        if not base_url.endswith('/wp-json/wp/v2/'):
+            if base_url.endswith('/'):
+                base_url = base_url + 'wp-json/wp/v2/'
+            else:
+                base_url = base_url + '/wp-json/wp/v2/'
+        
+        self.base_url = base_url
         self.auth = (WORDPRESS_CONFIG['user'], WORDPRESS_CONFIG['password'])
 
     def publish_processed_articles(self, max_articles=3):
@@ -214,7 +222,10 @@ class WordPressPublisher:
     def test_connection(self):
         """Test WordPress connection"""
         try:
+            # Test with a simple GET request to the posts endpoint
             response = requests.get(f"{self.base_url}posts", auth=self.auth, timeout=10)
+            logger.info(f"WordPress connection test: {response.status_code} - {self.base_url}posts")
             return response.status_code == 200
-        except Exception:
+        except Exception as e:
+            logger.error(f"WordPress connection failed: {str(e)}")
             return False

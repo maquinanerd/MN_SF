@@ -128,8 +128,7 @@ class AIProcessor:
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json"
-                ),
-                request_options={"timeout": 30}
+                )
             )
 
             if response.text:
