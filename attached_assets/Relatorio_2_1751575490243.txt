@@ -1,0 +1,435 @@
+# RELATÓRIO COMPLETO DO PROJETO - CONTENT AUTOMATION SYSTEM
+
+## RESUMO DO PROJETO
+Sistema de automação de conteúdo que coleta artigos de feeds RSS do ComicBook.com, processa com 2 IAs especializadas do Google Gemini, traduz para português e publica automaticamente no WordPress maquinanerd.com.br.
+
+## CREDENCIAIS E CHAVES
+
+### Google Gemini API Keys (5 chaves funcionais)
+```
+GEMINI_API_KEY_MOVIE_=AIzaSyBCSxUj2ydpaQPNBcl0QPiApNW2Xlh2wXk
+GEMINI_API_KEY_MOVIE_BACKUP=AIzaSyDlvzqi5kmoC9IRgrqywX52YYMPCIplWhs
+GEMINI_API_KEY_TV=AIzaSyBCSxUj2ydpaQPNBcl0QPiApNW2Xlh2wXk
+GEMINI_API_KEY_TV_BACKUP=AIzaSyDlvzqi5kmoC9IRgrqywX52YYMPCIplWhs
+GEMINI_API_KEY_BACKUP=AIzaSyAgDoanev71yGQOXvjesHLKfEqazJOv87w
+```
+
+### WordPress Credentials
+```
+WORDPRESS_URL=https://maquinanerd.com.br/wp-json/wp/v2/
+WORDPRESS_USER=Eduardo
+WORDPRESS_PASSWORD=QhDY Ch9y kTsX fyhU 9iR2 CAVp
+```
+
+### RSS Feeds
+```
+https://comicbook.com/category/movies/feed/
+https://comicbook.com/category/tv-shows/feed/
+```
+
+### Database
+```
+PostgreSQL (DATABASE_URL configurado automaticamente pelo Replit)
+```
+
+### Outras Configurações
+```
+SESSION_SECRET=your-secret-key-change-in-production
+USER_AGENT=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36
+```
+
+## ARQUITETURA DO SISTEMA
+
+### Estrutura de Arquivos Principais
+```
+├── main.py                 # Ponto de entrada principal
+├── app.py                  # Configuração Flask e database
+├── config.py               # Configurações centralizadas
+├── models.py               # Modelos SQLAlchemy
+├── routes/
+│   ├── admin.py           # Painel administrativo
+│   ├── four_ai_dashboard.py # Dashboard principal
+│   ├── processing_monitor.py # Monitor de processamento
+│   └── evaluation.py      # Sistema de avaliação
+├── services/
+│   ├── four_ai_processor.py # Processador de 5 IAs
+│   ├── gemini_key_manager.py # Gerenciador de chaves
+│   ├── rss_monitor.py     # Monitor RSS
+│   ├── wordpress_publisher.py # Publicador WordPress
+│   └── scheduler.py       # Agendador de tarefas
+├── templates/
+│   ├── four_ai_dashboard.html # Dashboard principal
+│   ├── processing_monitor.html # Monitor em tempo real
+│   └── evaluation_dashboard.html # Dashboard de avaliação
+└── static/
+    ├── css/
+    └── js/
+```
+
+## WORKFLOW DAS 5 IAs ESPECIALIZADAS
+
+
+## FUNCIONALIDADES IMPLEMENTADAS
+
+### Sistema de Monitoramento
+- Dashboard em tempo real com contadores de quota
+- Timer de próxima execução (atualizado a cada 5 segundos)
+- Status individual das 5 IAs
+- Botões Pausar/Retomar automação
+- Execução manual imediata
+
+### Processamento de Artigos
+- Coleta automática a cada 10 minutos
+- Processamento sequencial das 5 IAs
+- Fallback automático entre chaves
+- Limpeza automática de artigos processados
+
+### Integração WordPress
+- Publicação automática com featured images
+- Criação automática de categorias
+- Sistema de tags inteligente
+- Upload de imagens para media library
+
+### Categorização Inteligente
+```python
+CATEGORIES = {
+    'news': {'id': 20, 'name': 'Notícias'},
+    'movies': {'id': 24, 'name': 'Filmes'},
+    'tv-shows': {'id': 21, 'name': 'Séries'},
+    'default': {'id': 20, 'name': 'Notícias'}
+}
+```
+
+## PROBLEMAS IDENTIFICADOS E SOLUÇÕES
+
+### Problema Principal: Compressão de Conteúdo
+**Sintoma:** Artigos passando de 2.800+ caracteres para 1.116 caracteres
+**Causa:** Prompt da IA 2A inadequado
+**Solução:** Reformulação completa do prompt com instruções específicas
+
+### Correções Implementadas
+1. **Prompt HTML removido** - Causava problemas de formatação
+2. **Instruções de parágrafo** - Quebras duplas entre parágrafos
+3. **Preservação de conteúdo** - Instruções para manter todas as informações
+4. **Estrutura mínima** - Pelo menos 5 parágrafos por artigo
+
+## CONFIGURAÇÕES TÉCNICAS
+
+### Dependências Python
+```
+apscheduler==3.10.4
+beautifulsoup4==4.12.3
+email-validator==2.1.0
+feedparser==6.0.11
+flask==3.0.3
+flask-sqlalchemy==3.1.1
+google-genai==0.8.0
+gunicorn==23.0.0
+psycopg2-binary==2.9.9
+python-dotenv==1.0.1
+requests==2.31.0
+sqlalchemy==2.0.30
+trafilatura==1.12.2
+werkzeug==3.0.3
+```
+
+### Configuração do Servidor
+```python
+# main.py
+from app import app
+
+# Comando de execução
+gunicorn --bind 0.0.0.0:5000 --reuse-port --reload main:app
+```
+
+### Configuração do Database
+```python
+# app.py
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+    "pool_recycle": 300,
+    "pool_pre_ping": True,
+}
+```
+
+## MODELOS DE DADOS
+
+### Article Model
+```python
+class Article(db.Model):
+    id = db.Column(Integer, primary_key=True)
+    original_url = db.Column(String(500), unique=True, nullable=False)
+    original_title = db.Column(String(500), nullable=False)
+    original_content = db.Column(Text, nullable=False)
+    rewritten_title = db.Column(String(500))
+    rewritten_content = db.Column(Text)
+    wordpress_id = db.Column(Integer)
+    wordpress_url = db.Column(String(500))
+    category = db.Column(String(100))
+    tags = db.Column(Text)
+    featured_image_url = db.Column(String(500))
+    seo_description = db.Column(String(300))
+    focus_keyword = db.Column(String(100))
+    status = db.Column(String(50), default='pending')
+    created_at = db.Column(DateTime, default=datetime.utcnow)
+    published_at = db.Column(DateTime)
+    error_message = db.Column(Text)
+```
+
+### ProcessingLog Model
+```python
+class ProcessingLog(db.Model):
+    id = db.Column(Integer, primary_key=True)
+    article_id = db.Column(Integer, db.ForeignKey('articles.id'))
+    action = db.Column(String(100), nullable=False)
+    message = db.Column(Text)
+    created_at = db.Column(DateTime, default=datetime.utcnow)
+```
+
+## ROTAS PRINCIPAIS
+
+### Dashboard
+- `/` - Dashboard principal (four_ai_dashboard.html)
+- `/processing-monitor` - Monitor de processamento em tempo real
+- `/evaluation` - Dashboard de avaliação de qualidade
+
+### Admin
+- `/admin` - Painel administrativo
+- `/admin/logs` - Logs do sistema
+- `/admin/article/<id>` - Detalhes do artigo
+
+### APIs
+- `/api/ai-status` - Status das 5 IAs
+- `/api/recent-articles` - Artigos recentes
+- `/api/stats` - Estatísticas do sistema
+- `/api/execute-now` - Execução manual
+- `/api/pause-automation` - Pausar automação
+- `/api/resume-automation` - Retomar automação
+
+## PROMPTS DAS IAs
+
+### IA 1 (Tradutor)
+```
+Traduza este artigo do inglês para português brasileiro de forma natural e fiel.
+
+REGRAS:
+- Mantenha todos os detalhes originais
+- Use linguagem natural do português brasileiro
+- Preserve nomes próprios, títulos de filmes/séries
+- Não adicione nem remova informações
+
+ARTIGO ORIGINAL:
+{original_content}
+
+Responda em JSON:
+{
+    "titulo_traduzido": "título em português",
+    "conteudo_traduzido": "artigo completo traduzido"
+}
+```
+
+### IA 2A (Reescritor SEO) - VERSÃO CORRIGIDA
+```
+Reescreva completamente este artigo em português com formatação em parágrafos separados.
+
+EXEMPLO DO FORMATO CORRETO:
+"Primeira informação importante sobre o assunto. Detalhes específicos mencionados. Contexto relevante apresentado.
+
+Segunda parte da história com mais detalhes. Informações técnicas ou citações importantes. Dados específicos do artigo original.
+
+Terceira seção com declarações oficiais. Comentários de fontes citadas. Repercussões ou impactos mencionados.
+
+Quarta parte com contexto histórico ou técnico. Background necessário para entender a situação. Comparações ou referências relevantes.
+
+Informações finais e conclusão natural do artigo. Dados de lançamento ou expectativas futuras."
+
+INSTRUÇÕES CRÍTICAS:
+1. Escreva pelo menos 5 parágrafos separados
+2. Use quebra de linha dupla entre parágrafos
+3. Preserve TODAS as informações do artigo original
+4. Cada parágrafo com 2-4 frases completas
+5. Termine o artigo adequadamente (não corte no meio)
+
+CONTEÚDO ORIGINAL:
+Título: {titulo_traduzido}
+Artigo: {conteudo_traduzido}
+
+Responda APENAS em JSON:
+{
+    "titulo_seo": "título otimizado para SEO",
+    "conteudo_seo": "artigo completo com parágrafos separados por quebras duplas",
+    "meta_description": "resumo em máximo 150 caracteres",
+    "focus_keyword": "palavra-chave principal"
+}
+```
+
+### IA 3 (Editor-Chefe)
+```
+Revise este artigo como editor-chefe, criando metadados finais e otimizando para WordPress.
+
+TAREFAS:
+1. Título final SEO-otimizado
+2. Meta description atrativa
+3. Palavra-chave principal
+4. Categoria apropriada
+5. Tags relevantes
+
+ARTIGO:
+Título: {titulo_seo}
+Conteúdo: {conteudo_seo}
+
+Responda em JSON:
+{
+    "titulo_final": "título otimizado",
+    "meta_description": "descrição até 150 chars",
+    "focus_keyword": "palavra-chave",
+    "categoria": "categoria apropriada",
+    "tags": ["tag1", "tag2", "tag3"]
+}
+```
+
+## COMANDOS PARA MIGRAÇÃO
+
+### Instalação de Dependências
+```bash
+pip install -r requirements.txt
+```
+
+### Configuração do Banco
+```python
+# Execute uma vez para criar tabelas
+python -c "from app import app, db; app.app_context().push(); db.create_all()"
+```
+
+### Execução do Servidor
+```bash
+# Desenvolvimento
+python main.py
+
+# Produção
+gunicorn --bind 0.0.0.0:5000 --reuse-port --reload main:app
+```
+
+## VARIÁVEIS DE AMBIENTE NECESSÁRIAS
+
+```env
+# Gemini API Keys
+GEMINI_API_KEY_2=AIzaSyBCSxUj2ydpaQPNBcl0QPiApNW2Xlh2wXk
+GEMINI_API_KEY_3=AIzaSyDlvzqi5kmoC9IRgrqywX52YYMPCIplWhs
+GEMINI_API_KEY_4=AIzaSyBCSxUj2ydpaQPNBcl0QPiApNW2Xlh2wXk
+GEMINI_API_KEY_5=AIzaSyDlvzqi5kmoC9IRgrqywX52YYMPCIplWhs
+GEMINI_API_KEY_BACKUP=AIzaSyAgDoanev71yGQOXvjesHLKfEqazJOv87w
+
+# WordPress
+WORDPRESS_URL=https://maquinanerd.com.br/wp-json/wp/v2/
+WORDPRESS_USER=Eduardo
+WORDPRESS_PASSWORD=QhDY Ch9y kTsX fyhU 9iR2 CAVp
+
+# Database
+DATABASE_URL=postgresql://usuario:senha@host:porta/database
+
+# Segurança
+SESSION_SECRET=your-secret-key-change-in-production
+```
+
+## CONFIGURAÇÕES WORDPRESS
+
+### Categorias Existentes
+- **Notícias (ID: 20)** - Categoria principal
+- **Filmes (ID: 24)** - Categoria de filmes
+- **Séries (ID: 21)** - Categoria de séries
+- **Cinema (ID: 78)** - Categoria de cinema
+- **DC Comics (ID: 23)** - Categoria DC
+- **Entretenimento (ID: 74)** - Categoria de entretenimento
+
+### Usuário WordPress
+- **Login:** Eduardo
+- **Senha:** QhDY Ch9y kTsX fyhU 9iR2 CAVp
+- **Nível:** Administrador
+- **Site:** maquinanerd.com.br
+
+## OTIMIZAÇÕES IMPLEMENTADAS
+
+### Gestão de Quotas
+- **15 requests/minuto por chave** (75 total)
+- **1.500 requests/dia por chave** (7.500 total)
+- **Rotação automática** entre chaves
+- **Fallback inteligente** em caso de limite
+
+### Limpeza Automática
+- **Artigos publicados:** Removidos após publicação
+- **Artigos falhos:** Removidos após 6 horas
+- **Artigos travados:** Removidos após 2 horas
+
+### Monitoramento
+- **Dashboard em tempo real**
+- **Contadores de quota atualizados**
+- **Logs detalhados de processamento**
+- **Status individual das IAs**
+
+## ESTADO ATUAL DO PROJETO
+
+### Funcionalidades Operacionais
+✅ Coleta automática de RSS feeds
+✅ Processamento com 5 IAs especializadas
+✅ Tradução para português brasileiro
+✅ Publicação automática no WordPress
+✅ Sistema de fallback entre chaves
+✅ Dashboard de monitoramento
+✅ Limpeza automática de artigos
+
+### Problema Identificado
+❌ **Compressão de conteúdo:** IA 2A ainda comprime artigos ocasionalmente
+❌ **Qualidade inconsistente:** Alguns artigos ainda ficam incompletos
+
+### Última Correção Aplicada
+✅ **Prompt reformulado:** IA 2A com instruções específicas para múltiplos parágrafos
+✅ **Teste confirmado:** Artigo "Amy Sedaris" mostra melhoria significativa
+⏳ **Aguardando:** Próximos artigos para confirmar correção total
+
+## RECOMENDAÇÕES PARA MIGRAÇÃO
+
+### Plataformas Sugeridas
+1. **Heroku** - Fácil deploy, PostgreSQL integrado
+2. **DigitalOcean** - Droplets com controle total
+3. **AWS EC2** - Escalabilidade e controle
+4. **Google Cloud** - Integração nativa com Gemini
+
+### Checklist de Migração
+1. ✅ Copiar todos os arquivos do projeto
+2. ✅ Configurar variáveis de ambiente
+3. ✅ Instalar dependências Python
+4. ✅ Configurar banco PostgreSQL
+5. ✅ Testar conexão com APIs
+6. ✅ Executar migração de banco
+7. ✅ Testar workflow completo
+8. ✅ Configurar monitoramento
+
+### Testes Recomendados
+1. **Coleta RSS** - Verificar se feeds são acessíveis
+2. **APIs Gemini** - Testar todas as 5 chaves
+3. **WordPress** - Verificar publicação e upload de imagens
+4. **Scheduler** - Confirmar execução automática
+5. **Dashboard** - Testar interface em tempo real
+
+## CONTATO E SUPORTE
+
+### Informações do Projeto
+- **Desenvolvido em:** Replit
+- **Linguagem:** Python 3.11
+- **Framework:** Flask
+- **Banco:** PostgreSQL
+- **APIs:** Google Gemini, WordPress REST API
+
+### Arquivos Críticos para Backup
+- `services/four_ai_processor.py` - Processador principal
+- `services/gemini_key_manager.py` - Gerenciador de chaves
+- `config.py` - Configurações centralizadas
+- `models.py` - Estrutura do banco
+- `templates/` - Interfaces do usuário
+
+---
+
+**Data do Relatório:** 03 de Julho de 2025  
+**Status:** Sistema funcional com correções de qualidade em andamento  
+**Próximos Passos:** Migração para ambiente mais estável e teste das correções implementadas

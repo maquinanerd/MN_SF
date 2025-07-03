@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+
+{% block title %}Artigo - {{ article.titulo_final or article.original_title }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('dashboard.dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item active">Artigo #{{ article.id }}</li>
+            </ol>
+        </nav>
+        
+        <div class="d-flex justify-content-between align-items-center">
+            <h1 class="h3 mb-0">Detalhes do Artigo</h1>
+            <span class="badge bg-{{ 'success' if article.status == 'published' else 'warning' if article.status == 'processed' else 'info' if article.status == 'processing' else 'danger' if article.status == 'failed' else 'secondary' }} fs-6">
+                {{ article.status.title() }}
+            </span>
+        </div>
+    </div>
+</div>
+
+<!-- Article Information -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-newspaper me-2"></i>
+                    Informações do Artigo
+                </h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <th width="150">ID:</th>
+                        <td>{{ article.id }}</td>
+                    </tr>
+                    <tr>
+                        <th>Título Original:</th>
+                        <td>{{ article.original_title }}</td>
+                    </tr>
+                    {% if article.titulo_final %}
+                    <tr>
+                        <th>Título Final:</th>
+                        <td><strong>{{ article.titulo_final }}</strong></td>
+                    </tr>
+                    {% endif %}
+                    <tr>
+                        <th>Feed:</th>
+                        <td>
+                            <span class="badge bg-info">{{ article.feed_type }}</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>URL Original:</th>
+                        <td>
+                            <a href="{{ article.original_url }}" target="_blank" class="text-break">
+                                {{ article.original_url }}
+                                <i class="fas fa-external-link-alt ms-1"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% if article.wordpress_url %}
+                    <tr>
+                        <th>URL WordPress:</th>
+                        <td>
+                            <a href="{{ article.wordpress_url }}" target="_blank" class="text-break">
+                                {{ article.wordpress_url }}
+                                <i class="fas fa-external-link-alt ms-1"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endif %}
+                    {% if article.categoria %}
+                    <tr>
+                        <th>Categoria:</th>
+                        <td><span class="badge bg-secondary">{{ article.categoria }}</span></td>
+                    </tr>
+                    {% endif %}
+                    {% if article.obra_principal %}
+                    <tr>
+                        <th>Obra Principal:</th>
+                        <td><span class="badge bg-primary">{{ article.obra_principal }}</span></td>
+                    </tr>
+                    {% endif %}
+                    {% if article.focus_keyword %}
+                    <tr>
+                        <th>Palavra-chave:</th>
+                        <td><code>{{ article.focus_keyword }}</code></td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-clock me-2"></i>
+                    Timeline
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <small class="text-muted">Criado em:</small><br>
+                    <strong>{{ article.created_at.strftime('%d/%m/%Y %H:%M:%S') }}</strong>
+                </div>
+                
+                {% if article.processed_at %}
+                <div class="mb-3">
+                    <small class="text-muted">Processado em:</small><br>
+                    <strong>{{ article.processed_at.strftime('%d/%m/%Y %H:%M:%S') }}</strong>
+                </div>
+                {% endif %}
+                
+                {% if article.published_at %}
+                <div class="mb-3">
+                    <small class="text-muted">Publicado em:</small><br>
+                    <strong>{{ article.published_at.strftime('%d/%m/%Y %H:%M:%S') }}</strong>
+                </div>
+                {% endif %}
+                
+                {% if article.processing_time %}
+                <div class="mb-3">
+                    <small class="text-muted">Tempo de processamento:</small><br>
+                    <strong>{{ article.processing_time }}s</strong>
+                </div>
+                {% endif %}
+                
+                {% if article.ai_used %}
+                <div class="mb-3">
+                    <small class="text-muted">IA utilizada:</small><br>
+                    <span class="badge bg-success">{{ article.ai_used }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if article.error_message %}
+        <div class="card mt-3">
+            <div class="card-header bg-danger">
+                <h5 class="mb-0 text-white">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Erro
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-0">{{ article.error_message }}</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Content Sections -->
+{% if article.meta_description %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-tags me-2"></i>
+                    Meta Description
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-0">{{ article.meta_description }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-file-alt me-2"></i>
+                    Conteúdo Original
+                </h5>
+            </div>
+            <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                <div class="small text-muted">
+                    {{ article.original_content | truncate(2000) }}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if article.conteudo_final %}
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-magic me-2"></i>
+                    Conteúdo Processado
+                </h5>
+            </div>
+            <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                <div class="small">
+                    {{ article.conteudo_final | safe }}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Processing Logs -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-list me-2"></i>
+                    Logs de Processamento
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if logs %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Data/Hora</th>
+                                <th>Ação</th>
+                                <th>IA</th>
+                                <th>Status</th>
+                                <th>Mensagem</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in logs %}
+                            <tr>
+                                <td>
+                                    <small>{{ log.created_at.strftime('%d/%m %H:%M:%S') }}</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ log.action }}</span>
+                                </td>
+                                <td>
+                                    {% if log.ai_used %}
+                                    <span class="badge bg-info">{{ log.ai_used }}</span>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if log.success else 'danger' }}">
+                                        {{ 'OK' if log.success else 'ERRO' }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <small>{{ log.message | truncate(100) }}</small>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center">Nenhum log encontrado</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

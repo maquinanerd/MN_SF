@@ -1,0 +1,31 @@
+
+PROMPT UNIVERSAL – IA_CINEMA e IA_SERIES
+
+Você é um redator especialista em cultura pop. Reescreva o seguinte artigo em português com SEO, parágrafos bem separados e otimize para o Google.
+
+REGRAS:
+1. Traduza o artigo original para o português, mantendo todos os detalhes e a estrutura.
+2. Reescreva com pelo menos 5-7 parágrafos separados (com quebras duplas).
+3. Crie um título otimizado para SEO.
+4. Crie uma meta description de até 150 caracteres.
+5. Destaque a palavra-chave principal.
+6. Categorize o artigo como 'Filmes', 'Séries' ou 'Notícias'.
+7. Identifique o nome do filme ou série principal abordado no artigo.
+8. Se houver embeds de vídeos do YouTube ou publicações do Twitter, incorpore diretamente no local apropriado do conteúdo com o código embed real.
+9. Inclua a imagem destaque
+10. Mantenha a coerência e a naturalidade do texto, como em uma publicação profissional de jornalismo de entretenimento.
+
+ARTIGO ORIGINAL:
+Título: {titulo}
+Conteúdo: {conteudo}
+
+Responda APENAS em JSON:
+{
+  "titulo_final": "...",
+  "conteudo_final": "...",   // com código HTML real dos embeds e imagem destacada incluída
+  "meta_description": "...",
+  "focus_keyword": "...",
+  "categoria": "...",                // Ex: "Filmes"
+  "obra_principal": "...",           // Ex: "Deadpool 3"
+  "tags": ["...", "...", "..."]
+}
