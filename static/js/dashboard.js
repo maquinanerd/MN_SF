@@ -94,7 +94,84 @@ function updateSchedulerStatus(data) {
             statusElement.innerHTML = '<span class="text-danger">Parado</span>';
         }
     }
+    
+    // Update next execution time
+    if (data.jobs && data.jobs.length > 0) {
+        const automationJob = data.jobs.find(job => job.id === 'automation_cycle');
+        if (automationJob && automationJob.next_run) {
+            nextRunTime = automationJob.next_run;
+            updateCountdown(automationJob.next_run);
+        }
+    }
 }
+
+function updateCountdown(nextRunTime) {
+    const nextExecTime = document.getElementById('next-execution-time');
+    const countdownTimer = document.getElementById('countdown-timer');
+    
+    if (!nextExecTime || !countdownTimer) return;
+    
+    const nextRun = new Date(nextRunTime);
+    const now = new Date();
+    const timeDiff = nextRun - now;
+    
+    // Update next execution time display
+    nextExecTime.textContent = nextRun.toLocaleTimeString('pt-BR', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    });
+    
+    if (timeDiff > 0) {
+        const minutes = Math.floor(timeDiff / 60000);
+        const seconds = Math.floor((timeDiff % 60000) / 1000);
+        
+        if (minutes > 0) {
+            countdownTimer.textContent = `${minutes}m ${seconds}s`;
+        } else {
+            countdownTimer.textContent = `${seconds}s`;
+        }
+        
+        // Change color based on time remaining
+        const countdownDiv = document.getElementById('next-execution-countdown');
+        if (minutes < 1) {
+            countdownDiv.className = 'text-danger fw-bold fs-5';
+        } else if (minutes < 5) {
+            countdownDiv.className = 'text-warning fw-bold fs-5';
+        } else {
+            countdownDiv.className = 'text-success fw-bold fs-5';
+        }
+    } else {
+        countdownTimer.textContent = 'Executando...';
+        const countdownDiv = document.getElementById('next-execution-countdown');
+        countdownDiv.className = 'text-info fw-bold fs-5';
+    }
+}
+
+// Store next run time globally to avoid constant API calls
+let nextRunTime = null;
+
+// Update countdown every second using stored time
+setInterval(() => {
+    if (nextRunTime) {
+        updateCountdown(nextRunTime);
+    }
+}, 1000);
+
+// Update next run time every 30 seconds via API
+setInterval(() => {
+    fetch('/api/scheduler-status')
+        .then(response => response.json())
+        .then(data => {
+            if (data.jobs && data.jobs.length > 0) {
+                const automationJob = data.jobs.find(job => job.id === 'automation_cycle');
+                if (automationJob && automationJob.next_run) {
+                    nextRunTime = automationJob.next_run;
+                }
+            }
+        })
+        .catch(error => console.error('Error updating next run time:', error));
+}, 30000);
 
 function updateAIStatus(data) {
     // Update AI status indicators
