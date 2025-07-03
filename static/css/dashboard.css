@@ -1,0 +1,155 @@
+/* Dashboard Dark Theme Styles */
+
+:root {
+    --bs-dark: #212529;
+    --bs-darker: #1a1d20;
+    --bs-light-gray: #6c757d;
+    --bs-success-dark: #198754;
+    --bs-warning-dark: #fd7e14;
+    --bs-info-dark: #0dcaf0;
+    --bs-danger-dark: #dc3545;
+}
+
+body {
+    background-color: var(--bs-darker);
+    color: #fff;
+}
+
+.card {
+    background-color: var(--bs-dark);
+    border: 1px solid #495057;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.3);
+}
+
+.card-header {
+    background-color: #495057;
+    border-bottom: 1px solid #6c757d;
+}
+
+.table-dark {
+    --bs-table-bg: var(--bs-dark);
+    --bs-table-striped-bg: #495057;
+}
+
+.navbar {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.btn-outline-primary {
+    --bs-btn-color: #0dcaf0;
+    --bs-btn-border-color: #0dcaf0;
+    --bs-btn-hover-color: #000;
+    --bs-btn-hover-bg: #0dcaf0;
+    --bs-btn-hover-border-color: #0dcaf0;
+}
+
+/* Status badges */
+.badge {
+    font-size: 0.75em;
+}
+
+/* Loading spinner */
+.spinner-border {
+    width: 2rem;
+    height: 2rem;
+}
+
+/* Card hover effects */
+.card:hover {
+    transform: translateY(-2px);
+    transition: transform 0.2s ease-in-out;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.4);
+}
+
+/* Button group spacing */
+.d-flex.gap-2 > * {
+    margin-right: 0.5rem;
+}
+
+/* Responsive text truncation */
+.text-truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Status indicators */
+.scheduler-status {
+    padding: 0.5rem;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 0.25rem;
+}
+
+/* Animation for status updates */
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.updating {
+    animation: pulse 1s infinite;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .d-flex.gap-2 {
+        flex-direction: column;
+    }
+    
+    .d-flex.gap-2 > * {
+        margin-right: 0;
+        margin-bottom: 0.5rem;
+    }
+    
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+}
+
+/* Chart container */
+.chart-container {
+    position: relative;
+    height: 300px;
+    padding: 1rem;
+}
+
+/* Log styles */
+.log-entry {
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    border-left: 3px solid var(--bs-info);
+    background-color: rgba(255, 255, 255, 0.02);
+    border-radius: 0.25rem;
+}
+
+.log-entry.success {
+    border-left-color: var(--bs-success);
+}
+
+.log-entry.error {
+    border-left-color: var(--bs-danger);
+}
+
+.log-entry.warning {
+    border-left-color: var(--bs-warning);
+}
+
+/* Stats card improvements */
+.card.bg-primary,
+.card.bg-success,
+.card.bg-warning,
+.card.bg-info {
+    border: none;
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.5);
+}
+
+.card-title {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+}

@@ -1,0 +1,366 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Content Automation System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="h3 mb-0">
+            <i class="fas fa-tachometer-alt me-2"></i>
+            Dashboard de Automação de Conteúdo
+        </h1>
+        <p class="text-muted">Monitoramento em tempo real do sistema de publicação automática</p>
+    </div>
+</div>
+
+<!-- Status Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title text-white">{{ total_articles }}</h4>
+                        <p class="card-text text-white-50">Total de Artigos</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-newspaper fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-warning">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title text-dark">{{ pending_articles }}</h4>
+                        <p class="card-text text-dark">Pendentes</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-clock fa-2x text-dark"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-info">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title text-white">{{ processed_articles }}</h4>
+                        <p class="card-text text-white-50">Processados</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-cogs fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title text-white">{{ published_articles }}</h4>
+                        <p class="card-text text-white-50">Publicados</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-check-circle fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Control Panel -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-play-circle me-2"></i>
+                    Controles de Automação
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex gap-2 mb-3">
+                    <button class="btn btn-success" id="executeNowBtn">
+                        <i class="fas fa-play me-2"></i>
+                        Executar Agora
+                    </button>
+                    <button class="btn btn-warning" id="pauseBtn">
+                        <i class="fas fa-pause me-2"></i>
+                        Pausar
+                    </button>
+                    <button class="btn btn-info" id="resumeBtn">
+                        <i class="fas fa-resume me-2"></i>
+                        Retomar
+                    </button>
+                </div>
+                
+                <div class="scheduler-status">
+                    <small class="text-muted">
+                        Status: <span id="schedulerStatus" class="fw-bold">
+                            {% if scheduler_status.running %}
+                                <span class="text-success">Ativo</span>
+                            {% else %}
+                                <span class="text-danger">Parado</span>
+                            {% endif %}
+                        </span>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-brain me-2"></i>
+                    Status das IAs
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6">
+                        <small class="text-muted">Cinema AI:</small>
+                        <div>
+                            {% if ai_status.cinema and ai_status.cinema.primary_available %}
+                                <span class="badge bg-success">Primária OK</span>
+                            {% else %}
+                                <span class="badge bg-danger">Primária Falhou</span>
+                            {% endif %}
+                            {% if ai_status.cinema and ai_status.cinema.backup_available %}
+                                <span class="badge bg-warning">Backup OK</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted">Séries AI:</small>
+                        <div>
+                            {% if ai_status.series and ai_status.series.primary_available %}
+                                <span class="badge bg-success">Primária OK</span>
+                            {% else %}
+                                <span class="badge bg-danger">Primária Falhou</span>
+                            {% endif %}
+                            {% if ai_status.series and ai_status.series.backup_available %}
+                                <span class="badge bg-warning">Backup OK</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- WordPress Status -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fab fa-wordpress me-2"></i>
+                    Status do WordPress
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    {% if wordpress_connected %}
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        <span class="text-success">Conectado ao WordPress</span>
+                    {% else %}
+                        <i class="fas fa-times-circle text-danger me-2"></i>
+                        <span class="text-danger">Falha na conexão com WordPress</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Articles -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-list me-2"></i>
+                    Artigos Recentes
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-dark table-striped">
+                        <thead>
+                            <tr>
+                                <th>Título</th>
+                                <th>Status</th>
+                                <th>Feed</th>
+                                <th>IA Usada</th>
+                                <th>Criado em</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for article in recent_articles %}
+                            <tr>
+                                <td class="text-truncate" style="max-width: 300px;">
+                                    {{ article.titulo_final or article.original_title }}
+                                </td>
+                                <td>
+                                    {% if article.status == 'published' %}
+                                        <span class="badge bg-success">Publicado</span>
+                                    {% elif article.status == 'processed' %}
+                                        <span class="badge bg-info">Processado</span>
+                                    {% elif article.status == 'processing' %}
+                                        <span class="badge bg-warning">Processando</span>
+                                    {% elif article.status == 'pending' %}
+                                        <span class="badge bg-secondary">Pendente</span>
+                                    {% elif article.status == 'failed' %}
+                                        <span class="badge bg-danger">Falhou</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary">{{ article.feed_type }}</span>
+                                </td>
+                                <td>
+                                    {% if article.ai_used %}
+                                        <small class="text-muted">{{ article.ai_used }}</small>
+                                    {% else %}
+                                        <small class="text-muted">-</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <small class="text-muted">{{ article.created_at.strftime('%d/%m %H:%M') }}</small>
+                                </td>
+                                <td>
+                                    {% if article.wordpress_url %}
+                                        <a href="{{ article.wordpress_url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-external-link-alt"></i>
+                                        </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Carregando...</span>
+                </div>
+                <p class="mt-2 mb-0">Executando automação...</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-refresh stats every 30 seconds
+    setInterval(function() {
+        fetch('/api/stats')
+            .then(response => response.json())
+            .then(data => {
+                // Update cards without full page reload
+                updateStatsCards(data);
+            })
+            .catch(error => console.error('Error refreshing stats:', error));
+    }, 30000);
+    
+    // Control buttons
+    document.getElementById('executeNowBtn').addEventListener('click', function() {
+        executeNow();
+    });
+    
+    document.getElementById('pauseBtn').addEventListener('click', function() {
+        pauseAutomation();
+    });
+    
+    document.getElementById('resumeBtn').addEventListener('click', function() {
+        resumeAutomation();
+    });
+});
+
+function updateStatsCards(data) {
+    // Update cards if elements exist
+    const cards = document.querySelectorAll('.card h4');
+    if (cards.length >= 4) {
+        cards[0].textContent = data.total_articles;
+        cards[1].textContent = data.pending_articles;
+        cards[2].textContent = data.processed_articles;
+        cards[3].textContent = data.published_articles;
+    }
+}
+
+function executeNow() {
+    const modal = new bootstrap.Modal(document.getElementById('loadingModal'));
+    modal.show();
+    
+    fetch('/api/execute-now', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            modal.hide();
+            if (data.error) {
+                alert('Erro: ' + data.error);
+            } else {
+                alert('Automação executada com sucesso!');
+                location.reload();
+            }
+        })
+        .catch(error => {
+            modal.hide();
+            alert('Erro ao executar automação: ' + error);
+        });
+}
+
+function pauseAutomation() {
+    fetch('/api/pause-automation', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert('Erro: ' + data.error);
+            } else {
+                alert('Automação pausada!');
+                location.reload();
+            }
+        })
+        .catch(error => alert('Erro: ' + error));
+}
+
+function resumeAutomation() {
+    fetch('/api/resume-automation', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert('Erro: ' + data.error);
+            } else {
+                alert('Automação retomada!');
+                location.reload();
+            }
+        })
+        .catch(error => alert('Erro: ' + error));
+}
+</script>
+{% endblock %}
