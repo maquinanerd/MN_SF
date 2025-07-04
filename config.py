@@ -41,8 +41,8 @@ WORDPRESS_CATEGORIES = {
 # Schedule Configuration
 SCHEDULE_CONFIG = {
     'check_interval': 15,  # minutes
-    'max_articles_per_run': 3,
-    'cleanup_interval': 6  # hours
+    'max_articles_per_run': 5,  # aumentado para processar mais artigos
+    'cleanup_after_hours': 12
 }
 
 # Universal Prompt for AI Processing
