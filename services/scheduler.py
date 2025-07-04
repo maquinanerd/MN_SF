@@ -31,7 +31,7 @@ class ContentAutomationScheduler:
             # Schedule cleanup
             self.scheduler.add_job(
                 func=self.cleanup_cycle,
-                trigger=IntervalTrigger(hours=SCHEDULE_CONFIG['cleanup_interval']),
+                trigger=IntervalTrigger(hours=SCHEDULE_CONFIG['cleanup_after_hours']),
                 id='cleanup_cycle',
                 name='Database Cleanup',
                 replace_existing=True
