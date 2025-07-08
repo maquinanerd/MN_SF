@@ -1,4 +1,3 @@
-# Adding initialization logging to AI processor.
 import json
 import logging
 import time
@@ -28,7 +27,6 @@ class AIProcessor:
             AIProcessor._initialized = True
 
     def _init_clients(self):
-        """Initialize Gemini clients for each AI"""
         for ai_type, config in AI_CONFIG.items():
             if config['primary']:
                 try:
@@ -36,7 +34,6 @@ class AIProcessor:
                     logger.info(f"Initialized {ai_type} primary AI")
                 except Exception as e:
                     logger.error(f"Failed to initialize {ai_type} primary AI: {str(e)}")
-
             if config['backup']:
                 try:
                     self.clients[f"{ai_type}_backup"] = genai.Client(api_key=config['backup'])
@@ -45,23 +42,19 @@ class AIProcessor:
                     logger.error(f"Failed to initialize {ai_type} backup AI: {str(e)}")
 
     def process_pending_articles(self, max_articles=5):
-        """Process pending articles using appropriate AI"""
         pending_articles = Article.query.filter_by(status='pending').limit(max_articles).all()
-
         processed_count = 0
+
         for article in pending_articles:
             try:
                 start_time = time.time()
                 article.status = 'processing'
                 db.session.commit()
 
-                # Determine which AI to use based on feed type
                 ai_type = 'cinema' if article.feed_type == 'movies' else 'series'
-
                 result = self._process_with_ai(article, ai_type)
 
                 if result:
-                    # Update article with AI results
                     article.titulo_final = re.sub(r'</?strong>', '', result.get('titulo_final', ''))
                     article.conteudo_final = self._correct_paragraphs(result.get('conteudo_final'))
                     article.meta_description = result.get('meta_description')
@@ -74,29 +67,27 @@ class AIProcessor:
                     article.processing_time = int(time.time() - start_time)
 
                     self._log_processing(article.id, 'AI_PROCESSING', 'Successfully processed article', 
-                                       article.ai_used, True)
+                                         article.ai_used, True)
 
+                    db.session.commit()
                     processed_count += 1
                     logger.info(f"Successfully processed article: {article.original_title}")
                 else:
                     article.status = 'failed'
                     article.error_message = 'AI processing failed'
+                    db.session.commit()
                     self._log_processing(article.id, 'AI_PROCESSING', 'AI processing failed', 
-                                       article.ai_used, False)
-
-                db.session.commit()
+                                         article.ai_used, False)
 
             except Exception as e:
                 logger.error(f"Error processing article {article.id}: {str(e)}")
                 article.status = 'failed'
                 article.error_message = str(e)
-                db.session.commit()
+                db.session.rollback()
 
         return processed_count
 
     def _process_with_ai(self, article, ai_type):
-        """Process article with specified AI type, with fallback to backup"""
-        # Try primary AI first
         client_key = f"{ai_type}_primary"
         if client_key in self.clients:
             result = self._call_ai(self.clients[client_key], article, f"{ai_type}_primary")
@@ -104,7 +95,6 @@ class AIProcessor:
                 article.ai_used = f"{ai_type}_primary"
                 return result
 
-        # Fallback to backup AI
         client_key = f"{ai_type}_backup"
         if client_key in self.clients:
             logger.warning(f"Primary {ai_type} AI failed, trying backup")
@@ -117,7 +107,6 @@ class AIProcessor:
         return None
 
     def _call_ai(self, client, article, ai_name):
-        """Make actual AI call with error handling"""
         try:
             prompt = UNIVERSAL_PROMPT.format(
                 titulo=article.original_title,
@@ -130,22 +119,19 @@ class AIProcessor:
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json"
                 ),
-                request_options={"timeout": 30}  # <-- Timeout explícito adicionado aqui
+                request_options={"timeout": 30}
             )
 
             if response.text:
                 try:
                     result = json.loads(response.text)
-                    # Validate required fields
                     required_fields = ['titulo_final', 'conteudo_final', 'meta_description', 
-                                     'focus_keyword', 'categoria', 'obra_principal', 'tags']
-
+                                       'focus_keyword', 'categoria', 'obra_principal', 'tags']
                     if all(field in result for field in required_fields):
                         return result
                     else:
                         logger.error(f"Missing required fields in AI response from {ai_name}")
                         return None
-
                 except json.JSONDecodeError as e:
                     logger.error(f"Invalid JSON response from {ai_name}: {str(e)}")
                     return None
@@ -158,34 +144,26 @@ class AIProcessor:
             return None
 
     def _correct_paragraphs(self, content):
-        """Ensure content has proper paragraph structure and format"""
         if not content:
             return content
 
-        # Replace ** with <strong> tags
         content = re.sub(r'\*\*([^*]+)\*\*', r'<strong>\1</strong>', content)
-
-        # Split into sentences and regroup into paragraphs
         sentences = re.split(r'[.!?]+', content)
         sentences = [s.strip() for s in sentences if s.strip()]
 
         if len(sentences) < 5:
-            return content  # Keep as is if too short
+            return content
 
-        # Group sentences into paragraphs (3 sentences per paragraph)
         paragraphs = []
         for i in range(0, len(sentences), 3):
-            paragraph_sentences = sentences[i:i+3]
-            if paragraph_sentences:
-                paragraph = '. '.join(paragraph_sentences)
-                if not paragraph.endswith('.'):
-                    paragraph += '.'
-                paragraphs.append(paragraph)
+            paragraph = '. '.join(sentences[i:i+3])
+            if not paragraph.endswith('.'):
+                paragraph += '.'
+            paragraphs.append(paragraph)
 
         return '\n\n'.join(paragraphs)
 
     def _log_processing(self, article_id, action, message, ai_used, success):
-        """Log processing actions"""
         try:
             log = ProcessingLog(
                 article_id=article_id,
@@ -200,7 +178,6 @@ class AIProcessor:
             logger.error(f"Error logging processing action: {str(e)}")
 
     def get_ai_status(self):
-        """Get status of all AIs"""
         status = {}
         for ai_type in ['cinema', 'series']:
             status[ai_type] = {
@@ -211,7 +188,6 @@ class AIProcessor:
         return status
 
     def _get_last_used_time(self, ai_type):
-        """Get last time an AI was used"""
         last_log = ProcessingLog.query.filter(
             ProcessingLog.ai_used.like(f"{ai_type}%")
         ).order_by(ProcessingLog.created_at.desc()).first()

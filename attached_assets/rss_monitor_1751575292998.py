@@ -47,14 +47,24 @@ class RSSMonitor:
                 logger.error(f"Error fetching {feed_type} feed: {str(e)}")
 
         # Save new articles to database
+        from sqlalchemy.exc import IntegrityError
+
         if new_articles:
-            try:
-                db.session.add_all(new_articles)
-                db.session.commit()
-                logger.info(f"Saved {len(new_articles)} new articles to database")
-            except Exception as e:
-                logger.error(f"Error saving articles to database: {str(e)}")
-                db.session.rollback()
+            saved_count = 0
+            for article in new_articles:
+                try:
+                    db.session.add(article)
+                    db.session.commit()
+                    saved_count += 1
+                except IntegrityError:
+                    db.session.rollback()
+                    logger.warning(f"Artigo duplicado ignorado: {article.original_url}")
+                except Exception as e:
+                    db.session.rollback()
+                    logger.error(f"Erro ao salvar artigo: {article.original_url} - {str(e)}")
+
+            logger.info(f"Salvos {saved_count} artigos novos no banco")
+
 
         return len(new_articles)
 
