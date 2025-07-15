@@ -10,15 +10,8 @@ logger = logging.getLogger(__name__)
 
 class WordPressPublisher:
     def __init__(self):
-        base_url = WORDPRESS_CONFIG['url']
-        # Ensure URL has proper WordPress API endpoint
-        if not base_url.endswith('/wp-json/wp/v2/'):
-            if base_url.endswith('/'):
-                base_url = base_url + 'wp-json/wp/v2/'
-            else:
-                base_url = base_url + '/wp-json/wp/v2/'
-        
-        self.base_url = base_url
+        # Usa diretamente a URL completa do config, garantindo que termina com /
+        self.base_url = WORDPRESS_CONFIG['url'].rstrip('/') + '/'
         self.auth = (WORDPRESS_CONFIG['user'], WORDPRESS_CONFIG['password'])
 
     def publish_processed_articles(self, max_articles=3):
