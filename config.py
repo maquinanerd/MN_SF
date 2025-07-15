@@ -23,7 +23,7 @@ AI_CONFIG = {
 
 # WordPress Configuration
 WORDPRESS_CONFIG = {
-    'url': os.getenv('WORDPRESS_URL', 'https://maquinanerd.com.br/wp-json/wp/v2/'),
+    'url': os.getenv('WORDPRESS_URL', 'https://www.maquinanerd.com.br/wp-json/wp/v2/'),
     'user': os.getenv('WORDPRESS_USER', 'Eduardo'),
     'password': os.getenv('WORDPRESS_PASSWORD', 'QhDY Ch9y kTsX fyhU 9iR2 CAVp')
 }
