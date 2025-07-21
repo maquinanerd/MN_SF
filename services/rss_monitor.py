@@ -7,6 +7,7 @@ from app import db
 from models import Article
 from config import RSS_FEEDS, USER_AGENT
 from bs4 import BeautifulSoup
+from sqlalchemy.exc import IntegrityError
 
 logger = logging.getLogger(__name__)
 
@@ -46,17 +47,22 @@ class RSSMonitor:
             except Exception as e:
                 logger.error(f"Error fetching {feed_type} feed: {str(e)}")
 
-        # Save new articles to database
-        if new_articles:
+        # Save new articles individually to handle duplicates gracefully
+        saved_count = 0
+        for article in new_articles:
             try:
-                db.session.add_all(new_articles)
+                db.session.add(article)
                 db.session.commit()
-                logger.info(f"Saved {len(new_articles)} new articles to database")
-            except Exception as e:
-                logger.error(f"Error saving articles to database: {str(e)}")
+                saved_count += 1
+            except IntegrityError:
                 db.session.rollback()
+                logger.warning(f"Duplicate article skipped: {article.original_url}")
+            except Exception as e:
+                db.session.rollback()
+                logger.error(f"Error saving article: {article.original_url} - {str(e)}")
 
-        return len(new_articles)
+        logger.info(f"Saved {saved_count} new articles to database")
+        return saved_count
 
     def _article_exists(self, url):
         """Check if article already exists in database"""
